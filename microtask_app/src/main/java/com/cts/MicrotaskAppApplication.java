@@ -14,9 +14,4 @@ public class MicrotaskAppApplication {
 	}
 
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
 }
