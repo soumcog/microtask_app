@@ -1,8 +1,6 @@
 package com.cts.service;
 
 import com.cts.entity.Job;
-import com.cts.exception.ResourceNotFoundException;
-
 import java.util.List;
 import java.util.Optional;
 
