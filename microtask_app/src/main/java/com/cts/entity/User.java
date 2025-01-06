@@ -1,4 +1,3 @@
-//working till now 09:40
 package com.cts.entity;
 
 import jakarta.persistence.*;
@@ -14,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "users") // "users" table name
+@Table(name = "users")
 public class User {
 
     @Id
@@ -27,11 +26,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-
     @Column(nullable = false)
     private String email;
 
-    @Enumerated(EnumType.STRING)  // Store Role as a string
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
@@ -41,8 +39,7 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-
     public enum Role {
-      ADMIN, EMPLOYER, WORKER
+        ADMIN, EMPLOYER, WORKER
     }
-}	
+}
