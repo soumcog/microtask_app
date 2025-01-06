@@ -6,6 +6,7 @@ import com.cts.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,18 +21,21 @@ public class JobController {
     private JobService jobService;
 
     @PostMapping
+    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can post jobs
     public ResponseEntity<Job> createJob(@Valid @RequestBody Job job) {
         Job createdJob = jobService.createJob(job);
         return new ResponseEntity<>(createdJob, HttpStatus.CREATED);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')") // Only ADMIN, EMPLOYER, and WORKER can view jobs
     public ResponseEntity<List<Job>> getAllJobs() {
         List<Job> jobs = jobService.getAllJobs();
         return new ResponseEntity<>(jobs, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')") // Only ADMIN, EMPLOYER, and WORKER can view a specific job
     public ResponseEntity<Job> getJobById(@PathVariable Long id) {
         Optional<Job> job = jobService.getJobById(id);
         return job.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -39,6 +43,7 @@ public class JobController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can edit jobs
     public ResponseEntity<Job> updateJob(@PathVariable Long id, @Valid @RequestBody Job job) {
         try {
             Optional<Job> existingJob = jobService.getJobById(id);
@@ -54,6 +59,7 @@ public class JobController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can delete jobs
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         try {
             jobService.deleteJob(id);
