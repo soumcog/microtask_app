@@ -28,29 +28,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         http
-            .csrf()
-            .disable()
-            .authorizeHttpRequests()
-            // Public endpoints (no authentication required)
-            .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // Allow registration and login for all
+                .csrf(csrf -> csrf
+                        .disable())
+                .authorizeHttpRequests(requests -> requests
+                        // Public endpoints (no authentication required)
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // Allow registration and login for all
 
-            // Job endpoints
-            .requestMatchers(HttpMethod.GET, "/api/jobs/**").hasAnyRole("ADMIN", "EMPLOYER", "WORKER") // Only ADMIN, EMPLOYER, and WORKER can view jobs
-            .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can post jobs
-            .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can edit jobs
-            .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can delete jobs
+                        // Job endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/jobs/**").hasAnyRole("ADMIN", "EMPLOYER", "WORKER") // Only ADMIN, EMPLOYER, and WORKER can view jobs
+                        .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can post jobs
+                        .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can edit jobs
+                        .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can delete jobs
 
-            // Admin endpoints
-            .requestMatchers("/api/admin/**").hasRole("ADMIN") // Only admins can access admin endpoints
+                        // Admin endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // Only admins can access admin endpoints
 
-            // All other requests need to be authenticated
-            .anyRequest().authenticated()
-            .and()
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authenticationProvider(authenticationProvider)
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        // All other requests need to be authenticated
+                        .anyRequest().authenticated())
+                .sessionManagement(management -> management
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
