@@ -1,12 +1,17 @@
 package com.cts.controller;
 
 import com.cts.entity.Job;
+import com.cts.entity.User;
 import com.cts.exception.ResourceNotFoundException;
+import com.cts.exception.UnauthorizedAccessException;
+import com.cts.repository.UserRepository;
 import com.cts.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,22 +25,37 @@ public class JobController {
     @Autowired
     private JobService jobService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping
-    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can post jobs
+    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<Job> createJob(@Valid @RequestBody Job job) {
+        // Get the authenticated user's username
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        // Fetch the user ID from the database
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        // Set the createdBy field to the authenticated user's ID
+        job.setCreatedBy(user.getId());
+
+        // Create the job
         Job createdJob = jobService.createJob(job);
         return new ResponseEntity<>(createdJob, HttpStatus.CREATED);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')") // Only ADMIN, EMPLOYER, and WORKER can view jobs
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')")
     public ResponseEntity<List<Job>> getAllJobs() {
         List<Job> jobs = jobService.getAllJobs();
         return new ResponseEntity<>(jobs, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')") // Only ADMIN, EMPLOYER, and WORKER can view a specific job
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'WORKER')")
     public ResponseEntity<Job> getJobById(@PathVariable Long id) {
         Optional<Job> job = jobService.getJobById(id);
         return job.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -43,31 +63,51 @@ public class JobController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can edit jobs
+    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<Job> updateJob(@PathVariable Long id, @Valid @RequestBody Job job) {
-        try {
-            Optional<Job> existingJob = jobService.getJobById(id);
-            if (existingJob.isPresent()) {
-                job.setId(id);
-                return new ResponseEntity<>(jobService.updateJob(job), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        // Get the authenticated user's username
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        // Fetch the user ID from the database
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        // Check if the job exists and if the authenticated user is the owner
+        Optional<Job> existingJob = jobService.getJobById(id);
+        if (existingJob.isPresent()) {
+            if (!existingJob.get().getCreatedBy().equals(user.getId())) {
+                throw new UnauthorizedAccessException("You are not authorized to update this job.");
             }
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            job.setId(id);
+            job.setCreatedBy(user.getId()); // Ensure createdBy is not overwritten
+            return new ResponseEntity<>(jobService.updateJob(job), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('EMPLOYER')") // Only employers can delete jobs
+    @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
-        try {
+        // Get the authenticated user's username
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        // Fetch the user ID from the database
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        // Check if the job exists and if the authenticated user is the owner
+        Optional<Job> existingJob = jobService.getJobById(id);
+        if (existingJob.isPresent()) {
+            if (!existingJob.get().getCreatedBy().equals(user.getId())) {
+                throw new UnauthorizedAccessException("You are not authorized to delete this job.");
+            }
             jobService.deleteJob(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (ResourceNotFoundException e) {
+        } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

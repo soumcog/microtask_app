@@ -50,6 +50,9 @@ public class Job {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    private Long createdBy; // ID of the user who created the job
+
     public enum Category {
         DATA_ENTRY, WRITING, RESEARCH, DESIGN, OTHER
     }
@@ -57,5 +60,4 @@ public class Job {
     public enum JobStatus {
         OPEN, IN_PROGRESS, COMPLETED, CANCELLED
     }
-
 }
