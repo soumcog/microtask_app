@@ -40,8 +40,8 @@ public class AdminController {
     }
 
     // Update a user's role
-    @PutMapping("/users/{id}/role")
-    public ResponseEntity<User> updateUserRole(@PathVariable Long id, @RequestParam String newRole) {
+    @PutMapping("/users/{id}/{newRole}")
+    public ResponseEntity<User> updateUserRole(@PathVariable Long id, @PathVariable String newRole) {
         User updatedUser = adminService.updateUserRole(id, newRole);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
