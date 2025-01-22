@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -32,18 +31,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/jobs/**").hasAnyRole("ADMIN", "EMPLOYER", "WORKER")
-                        .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasRole("EMPLOYER")
-                        .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasRole("EMPLOYER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasRole("EMPLOYER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable()) // Disable CSRF protection
+            .authorizeHttpRequests(requests -> requests
+                // Public endpoints
+                .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // Allow registration and login
+
+                // Profile module endpoints (accessible to authenticated users)
+                .requestMatchers("/api/profile/**").authenticated()
+
+                // Job module endpoints
+                .requestMatchers(HttpMethod.GET, "/api/jobs/**").hasAnyRole("ADMIN", "EMPLOYER", "WORKER") // Allow all roles to view jobs
+                .requestMatchers(HttpMethod.POST, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can create jobs
+                .requestMatchers(HttpMethod.PUT, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can update jobs
+                .requestMatchers(HttpMethod.DELETE, "/api/jobs/**").hasRole("EMPLOYER") // Only employers can delete jobs
+
+                // Admin module endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN") // Only admins can access admin endpoints
+
+                // All other requests must be authenticated
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(management -> management
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
+            )
+            .authenticationProvider(authenticationProvider) // Use custom authentication provider
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
 
         return http.build();
     }
@@ -55,7 +67,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(); // Use BCrypt for password encoding
     }
 
     @Bean
