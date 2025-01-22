@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthenticationResponseDTO {
-    private String token;  // This will hold the JWT
+    private String token; // JWT token
+    private String role;  // User role (ADMIN, EMPLOYER, WORKER)
+    private Long userId;  // User ID
 }

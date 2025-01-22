@@ -5,8 +5,12 @@ import com.cts.dto.LoginRequestDTO;
 import com.cts.dto.RegisterRequestDTO;
 import com.cts.entity.User;
 import com.cts.exception.DuplicateResourceException;
+import com.cts.exception.UserNotFoundException;
 import com.cts.repository.UserRepository;
 import com.cts.security.JwtService;
+
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,8 +38,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Autowired
     private UserDetailsService userDetailsService;
 
-
-
     @Override
     public String register(RegisterRequestDTO request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -58,17 +60,44 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
 
-        @Override
+//        @Override
+//    public AuthenticationResponseDTO login(LoginRequestDTO request) {
+//
+//        authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+//        );
+//        
+//        User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new UserNotFoundException("User not found"));
+//        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+//        String jwtToken = jwtService.generateToken(userDetails);
+//        return AuthenticationResponseDTO.builder()
+//                .token(jwtToken)
+//                .role(user.getRole())
+//                .userId(user.getId())
+//                .build();
+//    }
+    @Override
     public AuthenticationResponseDTO login(LoginRequestDTO request) {
-
+        // Authenticate the user
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
+        // Fetch the user details
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        String jwtToken = jwtService.generateToken(userDetails);
+
+        // Generate the JWT token
+        String token = jwtService.generateToken(userDetails);
+
+        // Fetch the user entity to get the role and ID
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Build the response
         return AuthenticationResponseDTO.builder()
-                .token(jwtToken)
+                .token(token)
+                .role(user.getRole().toString()) // Include the role
+                .userId(user.getId())            // Include the user ID
                 .build();
     }
 }
