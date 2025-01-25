@@ -86,6 +86,22 @@ public class JobController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    
+    @GetMapping("/employer")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<List<Job>> getJobsByEmployer() {
+        // Get the authenticated user's username
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        // Fetch the user ID from the database
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        // Fetch jobs created by the employer
+        List<Job> jobs = jobService.getJobsByEmployer(user.getId());
+        return new ResponseEntity<>(jobs, HttpStatus.OK);
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")

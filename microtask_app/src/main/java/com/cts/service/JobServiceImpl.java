@@ -43,4 +43,9 @@ public class JobServiceImpl implements JobService {
             throw new ResourceNotFoundException("Job with ID " + id + " not found");
         }
     }
+
+    @Override
+    public List<Job> getJobsByEmployer(Long employerId) { // Implement this method
+        return jobRepository.findByCreatedBy(employerId);
+    }
 }

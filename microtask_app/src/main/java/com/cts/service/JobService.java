@@ -10,4 +10,5 @@ public interface JobService {
     Optional<Job> getJobById(Long id);
     Job updateJob(Job job);
     void deleteJob(Long id);
+    List<Job> getJobsByEmployer(Long employerId); // Add this method
 }
