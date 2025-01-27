@@ -55,74 +55,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-
     ) throws ServletException, IOException {
-
-
-        if (request.getServletPath().contains("/api/auth")) {
-
-            filterChain.doFilter(request, response);
-
-            return;
-
-        }
-
-
-
         final String authHeader = request.getHeader("Authorization");
 
-        final String jwt;
+        // Debugging: Log the Authorization header
+//        System.out.println("Authorization Header: " + authHeader);
 
-        final String userEmail;
-
-
-
-
-        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-
-
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
-
             return;
-
         }
 
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7); // Extract the token after "Bearer "
 
-        userEmail = jwtService.extractUsername(jwt);
+        // Debugging: Log the extracted JWT
+        //System.out.println("Extracted JWT: " + jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (jwt == null || jwt.isEmpty()) {
+            System.err.println("JWT token is empty or null.");
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        try {
+            final String userEmail = jwtService.extractUsername(jwt);
 
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-
-                        userDetails,
-
-                        null,
-
-                        userDetails.getAuthorities()
-
-                );
-
-                authToken.setDetails(
-
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
-
+        } catch (Exception e) {
+            // Log the error
+            System.err.println("Error processing JWT: " + e.getMessage());
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);
-
-
-
-    }
-
-}
+    }}
