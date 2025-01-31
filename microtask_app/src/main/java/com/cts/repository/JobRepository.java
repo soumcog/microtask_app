@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
-    List<Job> findByCreatedBy(Long createdBy); // Add this method
+    List<Job> findByCreatedBy(Long createdBy); 
 }

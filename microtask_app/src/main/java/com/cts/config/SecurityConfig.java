@@ -26,16 +26,17 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final JwtAuthenticationFilter jwtAuthFilter; //custom filter for jwt based authentication, get the jwt from auth header and validates it 
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // Disable CSRF protection
             .authorizeHttpRequests(requests -> requests
+            	//access rules
                 // Public endpoints
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // Allow registration and login
-
+                
                 // Profile module endpoints (accessible to authenticated users)
                 .requestMatchers("/api/profile/**").authenticated()
 
@@ -75,7 +76,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*"); // Allow requests from any origin (for development - adjust for production)
+        config.addAllowedOriginPattern("*"); // Allow requests from any origin (for development, i will change later
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config); // Apply this config to all paths

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/auth")  //base URL for all endpoints in this controller to
 public class AuthenticationController {
 
     @Autowired

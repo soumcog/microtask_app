@@ -1,54 +1,27 @@
-
 package com.cts.security;
 
-
-
 import jakarta.servlet.FilterChain;
-
 import jakarta.servlet.ServletException;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.servlet.http.HttpServletResponse;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.security.core.userdetails.UserDetails;
-
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-
 import org.springframework.stereotype.Component;
-
 import org.springframework.web.filter.OncePerRequestFilter;
-
-
 
 import java.io.IOException;
 
-
-
 @Component
-
 @RequiredArgsConstructor
-
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-
-
-
     private final JwtService jwtService;
-
     private final UserDetailsService userDetailsService;
-
-
-
-
-
 
     @Override
     protected void doFilterInternal(
@@ -59,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
 
         // Debugging: Log the Authorization header
-//        System.out.println("Authorization Header: " + authHeader);
+        //System.out.println("Authorization Header: " + authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -69,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7); // Extract the token after "Bearer "
 
         // Debugging: Log the extracted JWT
-        //System.out.println("Extracted JWT: " + jwt);
+      //  System.out.println("Extracted JWT: " + jwt);
 
         if (jwt == null || jwt.isEmpty()) {
             System.err.println("JWT token is empty or null.");
@@ -100,4 +73,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }}
+    }
+}
